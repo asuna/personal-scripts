@@ -1,0 +1,15 @@
+[Unit]
+Description=DNS Forwarder
+Documentation=man:dnsforwarder(8)
+After=network.target
+Before=nss-lookup.target
+Wants=nss-lookup.target
+
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=/usr/local/bin/dnsforwarder
+User=yuuki
+
+[Install]
+WantedBy=multi-user.target
