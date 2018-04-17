@@ -1,0 +1,12 @@
+[Unit]
+Description=qBitTorrent
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/qbittorrent-nox --webui-port=8089 --daemon
+User=ptsdl
+Group=ptsdl
+
+[Install]
+WantedBy=multi-user.target
