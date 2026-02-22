@@ -53,7 +53,7 @@ def process_single_audio(file_input, api_key, model_id, output_path=None, batch_
     """
     处理核心逻辑：
     - 单文件模式使用 output_path
-    - 批量模式使用 batch_dir, batch_basename 和 target_ext 动态拼装带语言代码的文件名
+    - 批量模式使用 batch_dir, batch_basename 和 target_ext 动态拼装【带模型名和语言代码】的文件名
     """
     headers = {'Authorization': f'Bearer {api_key}'}
     print(f"\n⏳ 正在处理: {file_input} [模型: {model_id}, 预设语言: {language}] ...")
@@ -100,7 +100,7 @@ def process_single_audio(file_input, api_key, model_id, output_path=None, batch_
 
         # ================== 3. 输出逻辑 ==================
         if response.status_code == 200:
-            # 优先从 API 结果中提取实际检测到的语言代码，如果未返回则回退到预设语言
+            # 提取检测到的语言代码
             detected_lang = result_json.get("language_code", result_json.get("language", language))
             
             print(f"✅ 转写成功！(检测语言: {detected_lang})")
@@ -119,8 +119,8 @@ def process_single_audio(file_input, api_key, model_id, output_path=None, batch_
                 # 单文件模式，直接使用用户指定的文件名
                 final_output_file = output_path
             elif batch_dir and batch_basename and target_ext is not None:
-                # 批量模式：原文件名_语言代码.后缀
-                final_output_file = os.path.join(batch_dir, f"{batch_basename}_{detected_lang}{target_ext}")
+                # 批量模式：原文件名_模型名称_语言代码.后缀
+                final_output_file = os.path.join(batch_dir, f"{batch_basename}_{model_id}_{detected_lang}{target_ext}")
 
             # 写入文件
             if final_output_file:
@@ -157,7 +157,7 @@ def process_single_audio(file_input, api_key, model_id, output_path=None, batch_
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="调用 302.ai API 将音频转写为文本 (批量模式支持文件名附带语言代码)")
+    parser = argparse.ArgumentParser(description="调用 302.ai API 将音频转写为文本 (批量模式自动追加 模型名+语言代码)")
     parser.add_argument("-f", "--file", required=True, help="音频文件路径、URL，或包含音频的【文件夹路径】")
     parser.add_argument("-k", "--key", required=True, help="API 授权密钥")
     parser.add_argument("-m", "--model", default="scribe_v1", help="模型 ID (例如: scribe_v1, whisperx)")
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     input_path = args.file
 
-    # 1. 如果输入的是一个 URL 或者是个独立文件
+    # 1. 单文件或 URL 模式
     if input_path.startswith("http://") or input_path.startswith("https://") or os.path.isfile(input_path):
         process_single_audio(
             input_path, args.key, args.model, 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
             language=args.language
         )
 
-    # 2. 如果输入的是一个目录（批量处理逻辑）
+    # 2. 批量处理模式
     elif os.path.isdir(input_path):
         print(f"\n📁 检测到目录: {input_path}，开启批量处理模式！")
         
